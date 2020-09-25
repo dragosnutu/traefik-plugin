@@ -2,9 +2,9 @@ package plugindemo_test
 
 import (
 	"context"
+	"github.com/dragosnutu/traefik-plugin"
 	"net/http"
 	"net/http/httptest"
-	"plugindemo"
 	"testing"
 )
 
