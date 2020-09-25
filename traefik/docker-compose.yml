@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  proxy:
+    image: traefik:v2.3
+    container_name: proxy
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./conf:/etc/traefik
+
+  green:
+    image: containous/whoami
+    container_name: green
+    labels:
+      - "traefik.http.routers.green.rule=Host(`green.docker.localhost`)"
+      - "traefik.http.routers.green-plugins.rule=Host(`green-plugin.docker.localhost`)"
+      - "traefik.http.routers.green-plugins.middlewares=rewrite-foo@docker, block-foo@docker"
+      - "traefik.http.middlewares.rewrite-foo.plugin.rewrite.rewrites[0].regex=IP"
+      - "traefik.http.middlewares.rewrite-foo.plugin.rewrite.rewrites[0].replacement=Internet Protocol"
+      - "traefik.http.middlewares.block-foo.plugin.block.regex[0]=^/not-allowed(.*)"
+
+  blue:
+    image: containous/whoami
+    container_name: blue
+    labels:
+      - "traefik.http.routers.blue.rule=Host(`blue.docker.localhost`)"

@@ -1,0 +1,15 @@
+### blue
+GET http://localhost
+Host: blue.docker.localhost
+
+### green
+GET http://localhost
+Host: green.docker.localhost
+
+### green - rewrite middleware plugin
+GET http://localhost/rewrite
+Host: green-plugin.docker.localhost
+
+### green - block midleware plugin
+GET http://localhost/not-allowed
+Host: green-plugin.docker.localhost
