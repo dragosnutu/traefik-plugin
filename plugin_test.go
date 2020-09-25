@@ -1,4 +1,4 @@
-package plugindemo_test
+package traefik_plugin_test
 
 import (
 	"context"
@@ -9,17 +9,14 @@ import (
 )
 
 func TestPlugin(t *testing.T) {
-	cfg := plugindemo.CreateConfig()
-	cfg.Headers["X-Host"] = "[[.Host]]"
-	cfg.Headers["X-Method"] = "[[.Method]]"
-	cfg.Headers["X-URL"] = "[[.URL]]"
-	cfg.Headers["X-URL"] = "[[.URL]]"
-	cfg.Headers["X-custom-header"] = "some-value"
+	cfg := traefik_plugin.CreateConfig()
+	cfg.Seconds = 15
+	cfg.Redirect = "some redirect"
 
 	ctx := context.Background()
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 
-	handler, err := plugindemo.New(ctx, next, cfg, "plugin-demo")
+	handler, err := traefik_plugin.New(ctx, next, cfg, "plugin-demo")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,16 +30,14 @@ func TestPlugin(t *testing.T) {
 
 	handler.ServeHTTP(recorder, req)
 
-	assertHeader(t, req, "X-Host", "localhost")
-	assertHeader(t, req, "X-URL", "http://localhost")
-	assertHeader(t, req, "X-Method", "GET")
-	assertHeader(t, req, "X-custom-header", "some-value")
+	assertHeader(t, recorder, "X-Seconds", "15")
+	assertHeader(t, recorder, "X-Redirect", "some redirect")
 }
 
-func assertHeader(t *testing.T, req *http.Request, key, expected string) {
+func assertHeader(t *testing.T, res *httptest.ResponseRecorder, key, expected string) {
 	t.Helper()
 
-	if req.Header.Get(key) != expected {
-		t.Errorf("invalid header value: %s", req.Header.Get(key))
+	if res.Header().Get(key) != expected {
+		t.Errorf("invalid header value: %s", res.Header().Get(key))
 	}
 }

@@ -10,7 +10,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./conf:/etc/traefik
-      - ./:/development/src/traefik-plugin
+      - ./../:/development/src/github.com/dragosnutu/traefik-plugin
 
   green:
     image: containous/whoami
@@ -18,7 +18,9 @@ services:
     labels:
       - "traefik.http.routers.green.rule=Host(`green.docker.localhost`)"
       - "traefik.http.routers.green-plugins.rule=Host(`green-plugin.docker.localhost`)"
-      - "traefik.http.routers.green-plugins.middlewares=rewrite-foo@docker, block-foo@docker"
+      - "traefik.http.routers.green-plugins.middlewares=rewrite-foo@docker, block-foo@docker, my-plugin@docker"
+      - "traefik.http.middlewares.my-plugin.plugin.dev.seconds=10"
+      - "traefik.http.middlewares.my-plugin.plugin.dev.redirect=somewhere"
       - "traefik.http.middlewares.rewrite-foo.plugin.rewrite.rewrites[0].regex=IP"
       - "traefik.http.middlewares.rewrite-foo.plugin.rewrite.rewrites[0].replacement=Internet Protocol"
       - "traefik.http.middlewares.block-foo.plugin.block.regex[0]=^/not-allowed(.*)"
