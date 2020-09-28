@@ -2,48 +2,118 @@ package traefik_plugin
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type Config struct {
-	Seconds  int32  `json:"seconds,omitempty"`
-	Redirect string `json:"redirect"`
+	JwtField  string   `json:"jwtFields"`
+	JwtValues []string `json:"jwtValues"`
+	Redirect  string   `json:"redirect"`
 }
 
 func CreateConfig() *Config {
-	return &Config{Seconds: int32(60)}
+	return &Config{}
 }
 
 type Plugin struct {
-	next     http.Handler
-	seconds  int32
-	redirect string
-	name     string
+	name      string
+	next      http.Handler
+	jwtField  string
+	jwtValues []string
+	redirect  string
+}
+
+type Token struct {
+	header  string
+	payload string
+	sign    string
 }
 
 //goland:noinspection GoUnusedParameter
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	if config.Seconds < 0 {
-		return nil, fmt.Errorf("Positive seconds are required")
+
+	fmt.Printf("Configs, jwtField=%v , jwtValues=%v, redirect=%v\n", config.JwtField, config.JwtValues, config.Redirect)
+
+	if len(config.JwtField) == 0 {
+		return nil, fmt.Errorf("jwtField needs to be set, current value=%v", config.JwtField)
+	}
+
+	if len(config.JwtValues) == 0 {
+		return nil, fmt.Errorf("jwtValues needs to be set, current values=%v", config.JwtValues)
 	}
 
 	if len(config.Redirect) == 0 {
-		return nil, fmt.Errorf("Redirect config is required")
+		return nil, fmt.Errorf("redirect needs to be set, current value=%v", config.Redirect)
 	}
 
 	return &Plugin{
-		seconds:  config.Seconds,
-		redirect: config.Redirect,
-		next:     next,
-		name:     name,
+		name:      name,
+		next:      next,
+		jwtField:  config.JwtField,
+		jwtValues: config.JwtValues,
+		redirect:  config.Redirect,
 	}, nil
 }
 
-func (a *Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (a *Plugin) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	authHeader := req.Header.Get("Authorization")
+	fmt.Printf("Using auth value=%v\n", authHeader)
 
-	rw.Header().Add("X-Seconds", fmt.Sprint(a.seconds))
-	rw.Header().Add("X-Redirect", a.redirect)
+	if len(authHeader) != 0 {
 
-	a.next.ServeHTTP(rw, req)
+		jwtValue := strings.TrimPrefix(authHeader, "Bearer ")
+		jwtValue = strings.TrimSpace(jwtValue)
+
+		parts := strings.Split(jwtValue, ".")
+
+		var token Token
+
+		token.header = parts[0]
+		token.payload = parts[1]
+		token.sign = parts[2]
+
+		jwtDecodedValue, err := base64.RawURLEncoding.DecodeString(token.payload)
+		if err != nil {
+			http.Error(res, "We could not decode jwt value", http.StatusBadRequest)
+		}
+
+		fmt.Printf("Jwt decode value=%v\n", string(jwtDecodedValue))
+
+		var rawJwt map[string]interface{}
+
+		err = json.Unmarshal(jwtDecodedValue, &rawJwt)
+		fmt.Printf("Unmarshalled raw %+v\n", rawJwt)
+		if err != nil {
+			http.Error(res, "We could not extract values", http.StatusBadRequest)
+		}
+
+		jwtFieldValue := rawJwt[a.jwtField].(string)
+
+		fmt.Printf("Checking jwtFieldValue=%v to jwtValues=%v\n", jwtFieldValue, a.jwtValues)
+		if contains(a.jwtValues, jwtFieldValue) {
+			fmt.Printf("We have %v on jwtField=%v, and jwt_values=%v contains it so -> redirecting to %v\n", jwtFieldValue, a.jwtField, a.jwtValues, a.redirect)
+			res.Header().Add("Location", a.redirect)
+			res.WriteHeader(http.StatusTemporaryRedirect)
+
+			return
+		}
+	}
+
+	a.next.ServeHTTP(res, req)
+}
+
+func contains(array []string, val string) bool {
+	for _, el := range array {
+		equal := el == val
+		fmt.Printf("Checking if val=%+v %T to el=%+v %T are same=%+v\n", val, val, el, el, equal)
+		if equal {
+			return true
+		}
+	}
+
+	return false
 }

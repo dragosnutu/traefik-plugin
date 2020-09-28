@@ -6,6 +6,7 @@ import: github.com/dragosnutu/traefik-plugin
 summary: '[Demo] Add Request Header'
 
 testData:
-  Headers:
-    X-Demo: test
-    X-URL: '{{URL}}'
+  JwtField: sub
+  JwtValues:
+    - '1234567890'
+  Redirect: 'http://localhost/redirected'

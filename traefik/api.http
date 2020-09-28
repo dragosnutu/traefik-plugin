@@ -13,3 +13,9 @@ Host: green-plugin.docker.localhost
 ### green - block midleware plugin
 GET http://localhost/not-allowed
 Host: green-plugin.docker.localhost
+
+### green - dev plugin redirect
+# @no-redirect
+GET http://localhost/sample-jwt-redirect
+Host: green-plugin.docker.localhost
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaWQiOiJ2YWwxIiwic3ViIjoiMTIzNDU2Nzg5MCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.qD-UTCPYUuIm3wJs5erlfudaq5xfEqt-AaEHEpULSZo
