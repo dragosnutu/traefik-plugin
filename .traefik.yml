@@ -1,10 +1,7 @@
-displayName: plugin demo
+displayName: JWT Redirect
+summary: 'JWT Fields based redirect'
 type: middleware
-
 import: github.com/dragosnutu/traefik-plugin
-
-summary: '[Demo] Add Request Header'
-
 testData:
   JwtField: sub
   JwtValues:

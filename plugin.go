@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -36,7 +37,7 @@ type Token struct {
 //goland:noinspection GoUnusedParameter
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
 
-	fmt.Printf("Configs, jwtField=%v , jwtValues=%v, redirect=%v\n", config.JwtField, config.JwtValues, config.Redirect)
+	log.Printf("Configs, jwtField=%v , jwtValues=%v, redirect=%v\n", config.JwtField, config.JwtValues, config.Redirect)
 
 	if len(config.JwtField) == 0 {
 		return nil, fmt.Errorf("jwtField needs to be set, current value=%v", config.JwtField)
@@ -61,7 +62,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 func (a *Plugin) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	authHeader := req.Header.Get("Authorization")
-	fmt.Printf("Using auth value=%v\n", authHeader)
+	log.Printf("Using auth value=%v\n", authHeader)
 
 	if len(authHeader) != 0 {
 
@@ -81,21 +82,21 @@ func (a *Plugin) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			http.Error(res, "We could not decode jwt value", http.StatusBadRequest)
 		}
 
-		fmt.Printf("Jwt decode value=%v\n", string(jwtDecodedValue))
+		log.Printf("Jwt decode value=%v\n", string(jwtDecodedValue))
 
 		var rawJwt map[string]interface{}
 
 		err = json.Unmarshal(jwtDecodedValue, &rawJwt)
-		fmt.Printf("Unmarshalled raw %+v\n", rawJwt)
+		log.Printf("Unmarshalled raw %+v\n", rawJwt)
 		if err != nil {
 			http.Error(res, "We could not extract values", http.StatusBadRequest)
 		}
 
 		jwtFieldValue := rawJwt[a.jwtField].(string)
 
-		fmt.Printf("Checking jwtFieldValue=%v to jwtValues=%v\n", jwtFieldValue, a.jwtValues)
+		log.Printf("Checking jwtFieldValue=%v to jwtValues=%v\n", jwtFieldValue, a.jwtValues)
 		if contains(a.jwtValues, jwtFieldValue) {
-			fmt.Printf("We have %v on jwtField=%v, and jwt_values=%v contains it so -> redirecting to %v\n", jwtFieldValue, a.jwtField, a.jwtValues, a.redirect)
+			log.Printf("We have %v on jwtField=%v, and jwt_values=%v contains it so -> redirecting to %v\n", jwtFieldValue, a.jwtField, a.jwtValues, a.redirect)
 			res.Header().Add("Location", a.redirect)
 			res.WriteHeader(http.StatusTemporaryRedirect)
 
@@ -109,7 +110,7 @@ func (a *Plugin) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 func contains(array []string, val string) bool {
 	for _, el := range array {
 		equal := el == val
-		fmt.Printf("Checking if val=%+v %T to el=%+v %T are same=%+v\n", val, val, el, el, equal)
+		log.Printf("Checking if val=%+v %T to el=%+v %T are same=%+v\n", val, val, el, el, equal)
 		if equal {
 			return true
 		}
