@@ -1,5 +1,5 @@
 displayName: JWT Redirect
-summary: 'JWT Fields based redirect'
+summary: 'It is able to do redirects based on JWT fields, and some values configurable.'
 type: middleware
 import: github.com/dragosnutu/traefik-plugin
 testData:

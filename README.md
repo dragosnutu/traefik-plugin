@@ -19,7 +19,7 @@ field extracted from the `Authorization` header, that is configurable, and a lis
 
 To configure the `JWT Redirect` plugin you should create a [middleware](https://docs.traefik.io/middlewares/overview/) in 
 your dynamic configuration as explained [here](https://docs.traefik.io/middlewares/overview/). The following example creates
-and uses the `jwtredirect` middleware plugin to redirect the user to a specific url based on values and a field value extracted from jwt.
+and uses the `jwtredirect` middleware plugin to redirect the user to a specific url based on values, and a field value extracted from jwt.
 
 ```toml
 [http.routers]
@@ -31,7 +31,7 @@ and uses the `jwtredirect` middleware plugin to redirect the user to a specific 
 [http.middlewares]
   [http.middlewares.jwtredirect-sub.plugin.jwtredirect]
     jwtField = "sub"
-    jwtVaues = ["val1", "val2"]
+    jwtValues = ["val1", "val2"]
     redirect = "https://google.com"
 
 [http.services]
